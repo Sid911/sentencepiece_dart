@@ -1,0 +1,34 @@
+name: sentencepiece_dart
+description: A wrapper plugin that allows to use setencepiece C++ library in flutter.
+version: 0.0.1
+repository: https://github.com/Sid911/sentencepiece_dart
+
+environment:
+  sdk: ">=2.12.0 <3.0.0"
+  flutter: ">=1.20.0"
+
+dependencies:
+  ffi: ^1.1.2
+  path_provider: ^2.0.4
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^1.0.4
+
+# For information on the generic Dart part of this file, see the
+# following page: https://dart.dev/tools/pub/pubspec
+
+# The following section is specific to Flutter.
+flutter:
+  # This section identifies this Flutter project as a plugin project.
+  # The 'pluginClass' and Android 'package' identifiers should not ordinarily
+  # be modified. They are used by the tooling to maintain consistency when
+  # adding or updating assets for this project.
+  plugin:
+    platforms:
+      android:
+        package: com.siddevs.example.sentencepiece_dart
+        pluginClass: SentencepieceDartPlugin
