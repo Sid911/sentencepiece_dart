@@ -36,6 +36,12 @@ typedef EncodeAsIdsNative = Int32Array Function(Pointer<Void>, Pointer<Utf8>);
 typedef CheckModeLoaded = int Function(Pointer<Void>);
 typedef CheckModeLoadedNative = Int32 Function(Pointer<Void>);
 
+typedef PieceToID = int Function(Pointer<Void>, Pointer<Utf8>);
+typedef PieceToIDNative = Int32 Function(Pointer<Void>, Pointer<Utf8>);
+
+typedef IDToPiece = Pointer<Utf8> Function(Pointer<Void>, int);
+typedef IDToPieceNative = Pointer<Utf8> Function(Pointer<Void>, Int32);
+
 class Int32Array extends Struct {
   external Pointer<Int32> data;
   @Int32()
@@ -46,18 +52,36 @@ class Int32Array extends Struct {
 ///
 /// Note : Use [SentencePiece] Class if possible
 class SentencepieceDartInterface {
-  static final DynamicLibrary _nativelib = DynamicLibrary.open("libsentencepiece.so");
+  static final DynamicLibrary _nativelib =
+      DynamicLibrary.open("libsentencepiece.so");
 
-  static SPMInit init = _nativelib.lookup<NativeFunction<SPMInitNative>>('sentencepieceInit').asFunction();
+  static SPMInit init = _nativelib
+      .lookup<NativeFunction<SPMInitNative>>('sentencepieceInit')
+      .asFunction();
 
-  static SPMDestroy destroy = _nativelib.lookup<NativeFunction<SPMDestroyNative>>('sentencepieceDestroy').asFunction();
+  static SPMDestroy destroy = _nativelib
+      .lookup<NativeFunction<SPMDestroyNative>>('sentencepieceDestroy')
+      .asFunction();
 
-  static LoadModel loadModelFile = _nativelib.lookup<NativeFunction<LoadModelNative>>('loadModelFile').asFunction();
+  static LoadModel loadModelFile = _nativelib
+      .lookup<NativeFunction<LoadModelNative>>('loadModelFile')
+      .asFunction();
 
-  static EncodeAsIds encodeAsIds = _nativelib.lookup<NativeFunction<EncodeAsIdsNative>>("encodeAsIds").asFunction();
+  static EncodeAsIds encodeAsIds = _nativelib
+      .lookup<NativeFunction<EncodeAsIdsNative>>("encodeAsIds")
+      .asFunction();
 
-  static CheckModeLoaded checkModelLoaded = _nativelib.lookup<NativeFunction<CheckModeLoadedNative>>("checkModelLoaded").asFunction();
+  static CheckModeLoaded checkModelLoaded = _nativelib
+      .lookup<NativeFunction<CheckModeLoadedNative>>("checkModelLoaded")
+      .asFunction();
 
+  static PieceToID pieceToID = _nativelib
+      .lookup<NativeFunction<PieceToIDNative>>('pieceToID')
+      .asFunction();
+
+  static IDToPiece idToPiece = _nativelib
+      .lookup<NativeFunction<IDToPieceNative>>('idToPiece')
+      .asFunction();
   static const MethodChannel _channel = MethodChannel('sentencepiece_dart');
 
   static Future<String?> get platformVersion async {
@@ -117,11 +141,21 @@ class Sentencepiece {
   /// Note : The function does not pre-process the [inputString] in any way, make sure to
   ///   - convert string to lowercase
   ///   - remove any stop character (punctuation) which isn't needed
-  List<int> encodeAsIds(String inputString, {int? startID, int? endID, int totalTokens = 128, bool raw = true}) {
-    bool idsProvided = (startID != null) && (endID != null);
+  List<int> encodeAsIds(String inputString,
+      {String? bos, String? eos, int totalTokens = 128, bool raw = true}) {
+    int? bosID, eosID;
+
+    bool idsProvided = (bos != null) && (eos != null);
     final input = inputString.toNativeUtf8();
     try {
-      Int32Array res = SentencepieceDartInterface.encodeAsIds(_nativeInstance, input);
+      if (idsProvided) {
+        bosID = SentencepieceDartInterface.pieceToID(
+            _nativeInstance, bos.toNativeUtf8());
+        eosID = SentencepieceDartInterface.pieceToID(
+            _nativeInstance, eos.toNativeUtf8());
+      }
+      Int32Array res =
+          SentencepieceDartInterface.encodeAsIds(_nativeInstance, input);
       List<int> temp = [];
       for (var i = 0; i < res.len; i++) {
         temp.add(res.data.elementAt(i).value);
@@ -129,21 +163,22 @@ class Sentencepiece {
       malloc.free(input);
       if (raw) {
         if (idsProvided) {
-          temp.add(endID);
-          temp.insert(0, startID);
+          temp.add(eosID!);
+          temp.insert(0, bosID!);
         }
         return temp;
       } else {
-        if (startID == null || endID == null) log('startID : $startID , endID: $endID');
+        if (bosID == null || eosID == null)
+          log('startID : $bosID , endID: $eosID');
         if (temp.length <= totalTokens - 2) {
-          temp.add(endID!);
-          temp.insert(0, startID!);
+          temp.add(eosID!);
+          temp.insert(0, bosID!);
           temp.addAll(List.filled(totalTokens - temp.length, 0));
           return temp;
         } else {
           temp.removeRange(126, temp.length);
-          temp.add(endID!);
-          temp.insert(0, startID!);
+          temp.add(eosID!);
+          temp.insert(0, bosID!);
           return temp;
         }
       }
@@ -154,22 +189,29 @@ class Sentencepiece {
   }
 
   /// Preprocesses a **single line** for a bert based model.
+  /// ---
+  /// **[bos]** : **B**eginning **O**f **S**entence token
   ///
-  /// **[startID]** : ID of CLS token
-  ///   Example: 2 for ALBERT models
+  ///   Example: `[CLS]` for ALBERT and some BERT models
   ///
-  /// **[endID]** : ID of SEP token
-  ///   Example: 3 for ALBERT models
+  /// **[eos]** : **E**nd **O**f **S**entence token
+  ///
+  ///   Example: `[SEP]` for ALBERT and some BERT models
   ///
   /// **[totalTokens]** : Total Number of tokens Expected by a Bert model
   ///
-  /// Returns List of len = 3 { word_ids, segment , mask }
-  List<List<int>> preprocessForBert(String inputString, int startID, int endID, {int totalTokens = 128}) {
-    List<int>? ids = encodeAsIds(inputString, startID: startID, endID: endID, totalTokens: totalTokens, raw: false);
+  /// -------
+  ///
+  /// Returns List of len = 3 as follows `[ word_ids, segment , mask ]`
+  List<List<int>> preprocessForBert(String inputString, String bos, String eos,
+      {int totalTokens = 128}) {
+    List<int>? ids = encodeAsIds(inputString,
+        bos: bos, eos: eos, totalTokens: totalTokens, raw: false);
     List<int> inputMasks;
     if (ids.contains(0)) {
       final zeroIndex = ids.indexOf(0);
-      inputMasks = List.filled(zeroIndex, 1) + List.filled(totalTokens - zeroIndex, 0);
+      inputMasks =
+          List.filled(zeroIndex, 1) + List.filled(totalTokens - zeroIndex, 0);
     } else {
       inputMasks = List.filled(totalTokens, 1);
     }
@@ -184,12 +226,15 @@ class Sentencepiece {
   ///       inputAssetPath: "assets/30kclean.model",
   ///       relativeOutputPath: "30kclean.model",
   ///)
-  static Future<String> saveAssetToApplicationDirectory({required String inputAssetPath, required String relativeOutputPath}) async {
+  static Future<String> saveAssetToApplicationDirectory(
+      {required String inputAssetPath,
+      required String relativeOutputPath}) async {
     Directory directory = await getApplicationDocumentsDirectory();
     String dbPath = directory.path + "/" + relativeOutputPath;
     if (FileSystemEntity.typeSync(dbPath) == FileSystemEntityType.notFound) {
       ByteData data = await rootBundle.load(inputAssetPath);
-      List<int> bytes = data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
+      List<int> bytes =
+          data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
       await File(dbPath).writeAsBytes(bytes);
     }
     return dbPath;

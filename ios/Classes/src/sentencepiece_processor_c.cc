@@ -1,17 +1,19 @@
-/*   Copyright 2021 Siddharth Sinha
+/*
+Copyright 2021 Siddharth Sinha
 
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-     http://www.apache.org/licenses/LICENSE-2.0
+http://www.apache.org/licenses/LICENSE-2.0
 
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissionsand
+limitations under the License.
 */
+
 #include "sentencepiece_processor_c.h"
 void* sentencepieceInit() {
 	return new sentencepiece::SentencePieceProcessor;
@@ -61,6 +63,15 @@ struct StringArray encodeAsPieces(void* processorhandle, char* input) {
 	return createStringArray(cstrings.data(), cstrings.size());
 }
 
+int pieceToID(void* processorhandle, char* piece) {
+	auto processor = static_cast<sentencepiece::SentencePieceProcessor*> (processorhandle);
+	return processor->PieceToId(piece);
+}
+
+const char* idToPiece(void* processorhandle, int id) {
+	auto processor = static_cast<sentencepiece::SentencePieceProcessor*> (processorhandle);
+	return processor->IdToPiece(id).c_str();
+}
 //struct string_array decodeFromIds(void* processorhandle,int* ids) {
 //	//Todo: Remember to implement
 //}

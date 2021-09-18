@@ -51,7 +51,7 @@ class _MyAppState extends State<MyApp> {
     /// 3. separate sentences
 
     // get the encodings note (debug mode builds take 20x more time to encode than even profile mode)
-    var res = spm!.preprocessForBert("this is a test", 2, 3);
+    var res = spm!.preprocessForBert("this is a test", "[CLS]", "[SEP]");
     // start tflite interpreter
     final options = InterpreterOptions()..useNnApiForAndroid = true;
     final interpreter = await Interpreter.fromAsset(

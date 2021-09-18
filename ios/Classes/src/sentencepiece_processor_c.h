@@ -1,17 +1,17 @@
 /*
-   Copyright 2021 Siddharth Sinha
+Copyright 2021 Siddharth Sinha
 
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-     http://www.apache.org/licenses/LICENSE-2.0
+http://www.apache.org/licenses/LICENSE-2.0
 
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissionsand
+limitations under the License.
 */
 #include "sentencepiece_processor.h"
 #include <stdint.h>
@@ -100,5 +100,20 @@ extern "C"{
 	/// <param name="processorhandle"> : Pointer to the stored 'sentecepiece Processor' object.</param>
 	/// <returns>Returns StringArray struct.</returns>
 	struct StringArray encodeAsPieces(void* processorhandle, char* input);
+	/// <summary>
+	/// Takes a vocab ID and returns its piece
+	/// </summary>
+	/// <param name="processorhandle"> : Pointer to the stored 'sentecepiece Processor' object.</param>
+	/// <param name="piece"> : piece to return ID for</param>
+	/// <returns>Returns vocab ID to the given piece or 0 if not found</returns>
+	int pieceToID(void* processorhandle, char* piece);
+	/// <summary>
+	/// Takes a piece and returns its respective vocab ID
+	/// </summary>
+	/// <param name="processorhandle"> : Pointer to the stored 'sentecepiece Processor' object.</param>
+	/// <param name="id"> : vocab ID to return a piece for </param>
+	/// <returns> Returns piece accociated with the given vocab ID (no checks if the id is not avaiable)
+	/// </returns>
+	const char* idToPiece(void* processorhandle, int id);
 
 }
