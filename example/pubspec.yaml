@@ -17,7 +17,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  path_provider: ^2.0.3
+  path_provider: ^2.0.5
   sentencepiece_dart:
     # When depending on this package from a real application you should use:
     #   sentencepiece_dart: ^x.y.z

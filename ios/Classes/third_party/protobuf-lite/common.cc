@@ -141,7 +141,7 @@ inline void DefaultLogHandler(LogLevel level, const char* filename, int line,
   };
 
   // Bound the logging level.
-  const int android_log_level = android_log_levels[level];
+  // const int android_log_level = android_log_levels[level];
   ::std::ostringstream ostr;
   ostr << "[libprotobuf " << level_names[level] << " " << filename << ":"
        << line << "] " << message.c_str();
