@@ -20,6 +20,7 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   String _platformVersion = 'Unknown';
+  String stuff = 'Plugin example app';
   bool show = false;
   late String platformVersion;
   late String modelPath;
@@ -32,18 +33,29 @@ class _MyAppState extends State<MyApp> {
 
   // Platform messages are asynchronous, so we initialize in an async method.
   Future<void> initPlatformState() async {
-    await Sentencepiece.saveAssetToApplicationDirectory(
-      inputAssetPath: "assets/30kclean.model",
-      relativeOutputPath: "30kclean.model",
-    ).then((value) {
-      setState(() {
-        modelPath = value;
-        spm = Sentencepiece(value);
-        show = true;
-      });
-    });
+    // await Sentencepiece.saveAssetToApplicationDirectory(
+    //   inputAssetPath: "assets/30kclean.model",
+    //   relativeOutputPath: "30kclean.model",
+    // ).then((value) {
+    //   setState(() {
+    //     modelPath = value;
+    //     spm = Sentencepiece(value);
+    //     show = true;
+    //   });
+    // });
     //  albert thingy
     Stopwatch stopwatch = Stopwatch()..start();
+    final List<String> sentences = [
+      "My phone fell down the building".toLowerCase(),
+      "It is warm today".toLowerCase(),
+      "Today is a hot day".toLowerCase(),
+      "I went to grandpa's home".toLowerCase(),
+      "I found some old tools".toLowerCase(),
+      "Where is my phone?".toLowerCase(),
+      "How old are you?".toLowerCase(),
+      "What is your age?".toLowerCase(),
+      "I am 16 years old".toLowerCase()
+    ];
 
     /// Note : This sentence does not represent a normal sentence, a normal sentence needs to be preprocessed.
     /// 1. convert to lowercase (sentencepiece requires this)
@@ -51,23 +63,28 @@ class _MyAppState extends State<MyApp> {
     /// 3. separate sentences
 
     // get the encodings note (debug mode builds take 20x more time to encode than even profile mode)
-    var res = spm!.preprocessForBert("this is a test", "[CLS]", "[SEP]");
-    // start tflite interpreter
-    final options = InterpreterOptions()..useNnApiForAndroid = true;
-    final interpreter = await Interpreter.fromAsset(
-        'lite-model_albert_lite_base_squadv1_metadata_1.tflite',
-        options: options);
-    final outputTensors = interpreter.getOutputTensors();
-    interpreter.allocateTensors();
-    final inputTensors = interpreter.getInputTensors();
-    // Sets the features to
-    inputTensors[0].setTo(res);
-    // Run the model
-    interpreter.invoke();
+    // var res = spm!.preprocessForAlBert("this is a test", "[CLS]", "[SEP]");
+    // // start tflite interpreter
+    // final options = InterpreterOptions()..useNnApiForAndroid = true;
+    // final interpreter = await Interpreter.fromAsset(
+    //     'lite-model_albert_lite_base_squadv1_metadata_1.tflite',
+    //     options: options);
+    // final outputTensors = interpreter.getOutputTensors();
+    // interpreter.allocateTensors();
+    // final inputTensors = interpreter.getInputTensors();
+    // // Sets the features to
+    // inputTensors[0].setTo(res);
+    // // Run the model
+    // interpreter.invoke();
+    // stopwatch.stop();
+    // log("time taken for model to run : ${stopwatch.elapsedMilliseconds}");
+    //
+    // final result = outputTensors[0].data.buffer.asFloat32List().toList();
+    // log(result.toString());
+    final result = Sentencepiece.perprocessUsingVocabFile(
+        vocabAssetPath: "vocab.txt", inputTexts: ['This is a test 32434']);
     stopwatch.stop();
-    log("time taken for model to run : ${stopwatch.elapsedMilliseconds}");
-
-    final result = outputTensors[0].data.buffer.asFloat32List().toList();
+    log(stopwatch.elapsedMilliseconds.toString());
     log(result.toString());
     try {
       platformVersion = await SentencepieceDartInterface.platformVersion ??
@@ -82,6 +99,7 @@ class _MyAppState extends State<MyApp> {
 
     setState(() {
       _platformVersion = platformVersion;
+      stuff = result[0];
     });
   }
 

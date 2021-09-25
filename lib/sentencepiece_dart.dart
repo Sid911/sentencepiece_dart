@@ -1,3 +1,5 @@
+// ignore_for_file: non_constant_identifier_names
+
 /*
    Copyright 2021 Siddharth Sinha
 
@@ -20,6 +22,7 @@ import 'dart:io';
 import 'package:ffi/ffi.dart';
 import 'package:flutter/services.dart' show ByteData, MethodChannel, rootBundle;
 import 'package:path_provider/path_provider.dart';
+import 'package:unorm_dart/unorm_dart.dart' as unorm;
 
 typedef SPMInit = Pointer<Void> Function();
 typedef SPMInitNative = Pointer<Void> Function();
@@ -168,8 +171,9 @@ class Sentencepiece {
         }
         return temp;
       } else {
-        if (bosID == null || eosID == null)
+        if (bosID == null || eosID == null) {
           log('startID : $bosID , endID: $eosID');
+        }
         if (temp.length <= totalTokens - 2) {
           temp.add(eosID!);
           temp.insert(0, bosID!);
@@ -203,10 +207,12 @@ class Sentencepiece {
   /// -------
   ///
   /// Returns List of len = 3 as follows `[ word_ids, segment , mask ]`
-  List<List<int>> preprocessForBert(String inputString, String bos, String eos,
+  List<List<int>> preprocessForAlBert(
+      String inputString, String bos, String eos,
       {int totalTokens = 128}) {
-    List<int>? ids = encodeAsIds(inputString,
+    List<int> ids = encodeAsIds(inputString,
         bos: bos, eos: eos, totalTokens: totalTokens, raw: false);
+    log(ids.toString());
     List<int> inputMasks;
     if (ids.contains(0)) {
       final zeroIndex = ids.indexOf(0);
@@ -216,6 +222,75 @@ class Sentencepiece {
       inputMasks = List.filled(totalTokens, 1);
     }
     return [ids, List.filled(totalTokens, 0), inputMasks];
+  }
+
+  List<List<List<int>>> preprocessMultipleForAlBert(
+      List<String> inputStrings, String bos, String eos,
+      {int totalTokenPerString = 128}) {
+    List<List<int>> idVec = List.empty(growable: true);
+
+    for (int i = 0; i < inputStrings.length; i++) {
+      idVec.add(encodeAsIds(inputStrings[i],
+          bos: bos, eos: eos, totalTokens: totalTokenPerString, raw: false));
+    }
+
+    List<List<int>> inputMaskVec = List.empty(growable: true);
+
+    for (int i = 0; i < inputStrings.length; i++) {
+      if (idVec[i].contains(0)) {
+        final zeroIndex = idVec[i].indexOf(0);
+        inputMaskVec.add(List.filled(zeroIndex, 1) +
+            List.filled(totalTokenPerString - zeroIndex, 0));
+      } else {
+        inputMaskVec.add(List.filled(totalTokenPerString, 1));
+      }
+    }
+
+    return [
+      idVec,
+      List.filled(inputStrings.length, List.filled(totalTokenPerString, 0)),
+      inputMaskVec
+    ];
+  }
+
+  /// Preprocessing for Bert Models Using vocab file
+  /// Steps:
+
+  /// - Choose whether or not to keep white space
+  /// - Use delimiters to keep chars
+  /// - Tokenize using a vocab file
+  static List<String> perprocessUsingVocabFile(
+      {required String vocabAssetPath,
+      required List<String> inputTexts,
+      bool lowerCase = true,
+      keepWhiteSpace = false,
+      preserveUnusedTokens = false,
+      normalizeUTF = false}) {
+    // Regex Strings
+    String _KEEP_DELIM_NO_WHITESPACE_PATTERN =
+        r'[!-/]|[:-@]|[\[-`]|[{-~]|[\p{P}]|[\u{4E00}-\u{9FFF}]|[\u{3400}-\u{4DBF}]|[\u{20000}-\u{2A6DF}]|[\u{2A700}-\u{2B73F}]|[\u{2B740}-\u{2B81F}]|[\u{2B820}-\u{2CEAF}]|[\u{F900}-\u{FAFF}]|[\u{2F800}-\u{2FA1F}]';
+    String _DELIM_REGEX_PATTERN = r'\\s+|' + _KEEP_DELIM_NO_WHITESPACE_PATTERN;
+    // normalized/lowercase texts
+    List<String> normTexts = List<String>.empty(growable: true);
+    // Normalize and remove unwanted chars
+    for (int i = 0; i < inputTexts.length; i++) {
+      String tempText;
+      if (lowerCase) {
+        // normalize utf8 (this case 16)
+        tempText =
+            inputTexts[i].replaceAll(RegExp(r'\p{Mn}', unicode: true), '');
+        // Remove Control chars and format characters
+        tempText.replaceAll(RegExp(r'\p{Cc}|\p{Cf}', unicode: true), ' ');
+        if (normalizeUTF) tempText = (unorm.nfkd(tempText));
+      } else {
+        tempText = inputTexts[i]
+            .replaceAll(RegExp(r'(\p{Cc}|\p{Cf})', unicode: true), ' ');
+        if (normalizeUTF) tempText = unorm.nfkc(tempText);
+      }
+      normTexts.add(tempText);
+    }
+
+    return normTexts;
   }
 
   /// Saves asset at [inputAssetPath] to relative path of application Directory at [relativeOutputPath]

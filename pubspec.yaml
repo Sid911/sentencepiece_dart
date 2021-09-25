@@ -10,6 +10,7 @@ environment:
 dependencies:
   ffi: ^1.1.2
   path_provider: ^2.0.5
+  unorm_dart: ^0.2.0
   flutter:
     sdk: flutter
 
