@@ -253,46 +253,6 @@ class Sentencepiece {
     ];
   }
 
-  /// Preprocessing for Bert Models Using vocab file
-  /// Steps:
-
-  /// - Choose whether or not to keep white space
-  /// - Use delimiters to keep chars
-  /// - Tokenize using a vocab file
-  static List<String> perprocessUsingVocabFile(
-      {required String vocabAssetPath,
-      required List<String> inputTexts,
-      bool lowerCase = true,
-      keepWhiteSpace = false,
-      preserveUnusedTokens = false,
-      normalizeUTF = false}) {
-    // Regex Strings
-    String _KEEP_DELIM_NO_WHITESPACE_PATTERN =
-        r'[!-/]|[:-@]|[\[-`]|[{-~]|[\p{P}]|[\u{4E00}-\u{9FFF}]|[\u{3400}-\u{4DBF}]|[\u{20000}-\u{2A6DF}]|[\u{2A700}-\u{2B73F}]|[\u{2B740}-\u{2B81F}]|[\u{2B820}-\u{2CEAF}]|[\u{F900}-\u{FAFF}]|[\u{2F800}-\u{2FA1F}]';
-    String _DELIM_REGEX_PATTERN = r'\\s+|' + _KEEP_DELIM_NO_WHITESPACE_PATTERN;
-    // normalized/lowercase texts
-    List<String> normTexts = List<String>.empty(growable: true);
-    // Normalize and remove unwanted chars
-    for (int i = 0; i < inputTexts.length; i++) {
-      String tempText;
-      if (lowerCase) {
-        // normalize utf8 (this case 16)
-        tempText =
-            inputTexts[i].replaceAll(RegExp(r'\p{Mn}', unicode: true), '');
-        // Remove Control chars and format characters
-        tempText.replaceAll(RegExp(r'\p{Cc}|\p{Cf}', unicode: true), ' ');
-        if (normalizeUTF) tempText = (unorm.nfkd(tempText));
-      } else {
-        tempText = inputTexts[i]
-            .replaceAll(RegExp(r'(\p{Cc}|\p{Cf})', unicode: true), ' ');
-        if (normalizeUTF) tempText = unorm.nfkc(tempText);
-      }
-      normTexts.add(tempText);
-    }
-
-    return normTexts;
-  }
-
   /// Saves asset at [inputAssetPath] to relative path of application Directory at [relativeOutputPath]
   /// Example:
   ///
@@ -313,5 +273,110 @@ class Sentencepiece {
       await File(dbPath).writeAsBytes(bytes);
     }
     return dbPath;
+  }
+}
+
+class Tokenizer {
+  // Regex Strings
+  late String KEEP_DELIM_NO_WHITESPACE_PATTERN;
+  late String DELIM_REGEX_PATTERN;
+
+  String CONTROL_CHAR_REGEX_PATTERN = r'\p{Cc}|\p{Cf}';
+  late Map<String, int>? vocabMap;
+
+  ///
+  Tokenizer(
+      {String? delimiterRegExPattern, String? keepDelimiterRegExPattern}) {
+    KEEP_DELIM_NO_WHITESPACE_PATTERN = keepDelimiterRegExPattern ??
+        r'[!-/]|[:-@]|[\[-`]|[{-~]|[\p{P}]|[\u{4E00}-\u{9FFF}]|[\u{3400}-\u{4DBF}]|[\u{20000}-\u{2A6DF}]|[\u{2A700}-\u{2B73F}]|[\u{2B740}-\u{2B81F}]|[\u{2B820}-\u{2CEAF}]|[\u{F900}-\u{FAFF}]|[\u{2F800}-\u{2FA1F}]';
+    DELIM_REGEX_PATTERN =
+        delimiterRegExPattern ?? r'\s+|' + KEEP_DELIM_NO_WHITESPACE_PATTERN;
+  }
+
+  Future<void> loadVocabFile(String vocabAssetPath) async {
+    // loading vocab file
+    List<String> vocab =
+        (await rootBundle.loadString(vocabAssetPath)).split('\n');
+    vocabMap =
+        Map.fromIterables(vocab, List.generate(vocab.length, (index) => index));
+    log(vocabMap!.values.toList().toString());
+  }
+
+  /// Preprocessing for Bert Models Using vocab file
+  Future<List<List<int>>> perprocessUsingVocabFile(
+      {required List<String> inputTexts,
+      String? vocabAssetPath,
+      bool lowerCase = true,
+      bool keepWhiteSpace = false,
+      bool preserveUnusedTokens = false,
+      normalizeUTF = false}) async {
+    // normalized/lowercase texts
+    List<String> normTexts = List<String>.empty(growable: true);
+    // Normalize and remove unwanted chars
+    for (int i = 0; i < inputTexts.length; i++) {
+      String tempText;
+      if (lowerCase) {
+        // normalize utf8 (this case 16)
+        tempText = inputTexts[i]
+            .replaceAll(RegExp(r'\p{Mn}|\p{Ps}|\p{Pi}', unicode: true), '');
+        // Remove Control chars and format characters
+        tempText.replaceAll(
+            RegExp(CONTROL_CHAR_REGEX_PATTERN, unicode: true), ' ');
+        if (normalizeUTF) tempText = (unorm.nfkd(tempText));
+      } else {
+        tempText = inputTexts[i]
+            .replaceAll(RegExp(CONTROL_CHAR_REGEX_PATTERN, unicode: true), ' ');
+        if (normalizeUTF) tempText = unorm.nfkc(tempText);
+      }
+
+      normTexts.add(tempText);
+    }
+    if (vocabAssetPath != null) {
+      await loadVocabFile(vocabAssetPath);
+    } else if (vocabMap == null) {
+      throw Exception(
+          'vocabulary not set. provide vocabulary Asset file path or use `Tokenizer.loadVocabFile()` before running this function');
+    }
+
+    return _encodeUsingVocab(normTexts);
+  }
+
+  List<List<int>> _encodeUsingVocab(List<String> normalizedTexts) {
+    List<List<int>> ids = List<List<int>>.empty(growable: true);
+    // loop over normalized text
+    for (int i = 0; i < normalizedTexts.length; i++) {
+      // List<RegExpMatch> matches =
+      //     RegExp(DELIM_REGEX_PATTERN).allMatches(normalizedTexts[i]).toList();
+      String currentText = normalizedTexts[i];
+      List<int> idPerSentence = _recurseFindText(currentText);
+      ids.add(idPerSentence);
+    }
+    return ids;
+  }
+
+  // flagging
+  List<int> _recurseFindText(
+    String text, {
+    List<int>? list,
+  }) {
+    list ??= List<int>.empty(growable: true);
+    if (vocabMap!.containsKey(text)) {
+      // flag : 5210
+      list.add(vocabMap![text]!);
+      return list;
+    } else {
+      if (text.length == 1) list.add(-1);
+      for (int i = 1; i < text.length; i++) {
+        //ging
+        if (vocabMap!.containsKey('##' + text.substring(i))) {
+          //flag
+          list.addAll(_recurseFindText(text));
+          // ##ging : 4726
+          list.add(vocabMap!['##' + text.substring(i)]!);
+        }
+      }
+    }
+    // 5210 , 4726
+    return list;
   }
 }

@@ -5,6 +5,7 @@ import 'dart:async';
 
 import 'package:flutter/services.dart' show PlatformException;
 import 'package:sentencepiece_dart/sentencepiece_dart.dart';
+// ignore: unused_import
 import 'package:tflite_flutter/tflite_flutter.dart';
 
 void main() {
@@ -45,6 +46,7 @@ class _MyAppState extends State<MyApp> {
     // });
     //  albert thingy
     Stopwatch stopwatch = Stopwatch()..start();
+    // ignore: unused_local_variable
     final List<String> sentences = [
       "My phone fell down the building".toLowerCase(),
       "It is warm today".toLowerCase(),
@@ -81,8 +83,9 @@ class _MyAppState extends State<MyApp> {
     //
     // final result = outputTensors[0].data.buffer.asFloat32List().toList();
     // log(result.toString());
-    final result = Sentencepiece.perprocessUsingVocabFile(
-        vocabAssetPath: "vocab.txt", inputTexts: ['This is a test 32434']);
+    final result = await Tokenizer().perprocessUsingVocabFile(
+        vocabAssetPath: "assets/vocab.txt",
+        inputTexts: ['This is a test 32434']);
     stopwatch.stop();
     log(stopwatch.elapsedMilliseconds.toString());
     log(result.toString());
@@ -99,7 +102,6 @@ class _MyAppState extends State<MyApp> {
 
     setState(() {
       _platformVersion = platformVersion;
-      stuff = result[0];
     });
   }
 
