@@ -45,7 +45,7 @@ class _MyAppState extends State<MyApp> {
     //   });
     // });
     //  albert thingy
-    Stopwatch stopwatch = Stopwatch()..start();
+
     // ignore: unused_local_variable
     final List<String> sentences = [
       "My phone fell down the building".toLowerCase(),
@@ -83,9 +83,11 @@ class _MyAppState extends State<MyApp> {
     //
     // final result = outputTensors[0].data.buffer.asFloat32List().toList();
     // log(result.toString());
-    final result = await Tokenizer().perprocessUsingVocabFile(
-        vocabAssetPath: "assets/vocab.txt",
-        inputTexts: ['This is a test 32434']);
+    final tokenizer = Tokenizer();
+    await tokenizer.loadVocabFile("assets/vocab.txt");
+    Stopwatch stopwatch = Stopwatch()..start();
+    final result = await tokenizer
+        .preprocessUsingVocabFile(inputTexts: ['This is a test 32434']);
     stopwatch.stop();
     log(stopwatch.elapsedMilliseconds.toString());
     log(result.toString());

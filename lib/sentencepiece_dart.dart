@@ -212,7 +212,6 @@ class Sentencepiece {
       {int totalTokens = 128}) {
     List<int> ids = encodeAsIds(inputString,
         bos: bos, eos: eos, totalTokens: totalTokens, raw: false);
-    log(ids.toString());
     List<int> inputMasks;
     if (ids.contains(0)) {
       final zeroIndex = ids.indexOf(0);
@@ -299,11 +298,10 @@ class Tokenizer {
         (await rootBundle.loadString(vocabAssetPath)).split('\n');
     vocabMap =
         Map.fromIterables(vocab, List.generate(vocab.length, (index) => index));
-    log(vocabMap!.values.toList().toString());
   }
 
   /// Preprocessing for Bert Models Using vocab file
-  Future<List<List<int>>> perprocessUsingVocabFile(
+  Future<List<List<int>>> preprocessUsingVocabFile(
       {required List<String> inputTexts,
       String? vocabAssetPath,
       bool lowerCase = true,
@@ -318,7 +316,8 @@ class Tokenizer {
       if (lowerCase) {
         // normalize utf8 (this case 16)
         tempText = inputTexts[i]
-            .replaceAll(RegExp(r'\p{Mn}|\p{Ps}|\p{Pi}', unicode: true), '');
+            .replaceAll(RegExp(r'\p{Mn}|\p{Ps}|\p{Pi}', unicode: true), '')
+            .toLowerCase();
         // Remove Control chars and format characters
         tempText.replaceAll(
             RegExp(CONTROL_CHAR_REGEX_PATTERN, unicode: true), ' ');
@@ -328,7 +327,6 @@ class Tokenizer {
             .replaceAll(RegExp(CONTROL_CHAR_REGEX_PATTERN, unicode: true), ' ');
         if (normalizeUTF) tempText = unorm.nfkc(tempText);
       }
-
       normTexts.add(tempText);
     }
     if (vocabAssetPath != null) {
@@ -345,10 +343,19 @@ class Tokenizer {
     List<List<int>> ids = List<List<int>>.empty(growable: true);
     // loop over normalized text
     for (int i = 0; i < normalizedTexts.length; i++) {
-      // List<RegExpMatch> matches =
-      //     RegExp(DELIM_REGEX_PATTERN).allMatches(normalizedTexts[i]).toList();
       String currentText = normalizedTexts[i];
-      List<int> idPerSentence = _recurseFindText(currentText);
+      if (currentText[currentText.length - 1] != '.') {
+        currentText = currentText + '.';
+      }
+      List<int> idPerSentence = List<int>.empty(growable: true);
+      List<RegExpMatch> matches = RegExp(DELIM_REGEX_PATTERN, unicode: true)
+          .allMatches(currentText)
+          .toList();
+      for (int j = 0; j < matches.length; j++) {
+        final start = j != 0 ? matches[j - 1].end : 0;
+        idPerSentence.addAll(
+            _recurseFindText(currentText.substring(start, matches[j].end - 1)));
+      }
       ids.add(idPerSentence);
     }
     return ids;
@@ -359,6 +366,7 @@ class Tokenizer {
     String text, {
     List<int>? list,
   }) {
+    if (text.isEmpty) return [];
     list ??= List<int>.empty(growable: true);
     if (vocabMap!.containsKey(text)) {
       // flag : 5210
@@ -367,12 +375,14 @@ class Tokenizer {
     } else {
       if (text.length == 1) list.add(-1);
       for (int i = 1; i < text.length; i++) {
+        final String subs = '##' + text.substring(i);
         //ging
-        if (vocabMap!.containsKey('##' + text.substring(i))) {
+        if (vocabMap!.containsKey(subs)) {
           //flag
-          list.addAll(_recurseFindText(text));
+          list.addAll(_recurseFindText(text.substring(0, i)));
           // ##ging : 4726
-          list.add(vocabMap!['##' + text.substring(i)]!);
+          list.add(vocabMap![subs]!);
+          break;
         }
       }
     }
