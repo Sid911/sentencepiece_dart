@@ -277,19 +277,19 @@ class Sentencepiece {
 
 class Tokenizer {
   // Regex Strings
-  late String KEEP_DELIM_NO_WHITESPACE_PATTERN;
+  late String DELIM_NO_WHITESPACE_PATTERN;
   late String DELIM_REGEX_PATTERN;
 
   String CONTROL_CHAR_REGEX_PATTERN = r'\p{Cc}|\p{Cf}';
   late Map<String, int>? vocabMap;
 
-  ///
+  /// Todo : Complete documentation
   Tokenizer(
       {String? delimiterRegExPattern, String? keepDelimiterRegExPattern}) {
-    KEEP_DELIM_NO_WHITESPACE_PATTERN = keepDelimiterRegExPattern ??
+    DELIM_NO_WHITESPACE_PATTERN = keepDelimiterRegExPattern ??
         r'[!-/]|[:-@]|[\[-`]|[{-~]|[\p{P}]|[\u{4E00}-\u{9FFF}]|[\u{3400}-\u{4DBF}]|[\u{20000}-\u{2A6DF}]|[\u{2A700}-\u{2B73F}]|[\u{2B740}-\u{2B81F}]|[\u{2B820}-\u{2CEAF}]|[\u{F900}-\u{FAFF}]|[\u{2F800}-\u{2FA1F}]';
     DELIM_REGEX_PATTERN =
-        delimiterRegExPattern ?? r'\s+|' + KEEP_DELIM_NO_WHITESPACE_PATTERN;
+        delimiterRegExPattern ?? r'\s+|' + DELIM_NO_WHITESPACE_PATTERN;
   }
 
   Future<void> loadVocabFile(String vocabAssetPath) async {
@@ -300,14 +300,20 @@ class Tokenizer {
         Map.fromIterables(vocab, List.generate(vocab.length, (index) => index));
   }
 
-  /// Preprocessing for Bert Models Using vocab file
-  Future<List<List<int>>> preprocessUsingVocabFile(
-      {required List<String> inputTexts,
-      String? vocabAssetPath,
-      bool lowerCase = true,
-      bool keepWhiteSpace = false,
-      bool preserveUnusedTokens = false,
-      normalizeUTF = false}) async {
+  /// tokenization for Bert Models Using vocab file.
+  List<List<int>> tokenize({
+    required List<String> inputTexts,
+    String? vocabAssetPath,
+    bool lowerCase = true,
+    bool keepWhiteSpace = false,
+    bool preserveUnusedTokens = false,
+    bool normalizeUTF = false,
+    bool raw = false,
+    int totalTokens = 128,
+    String BOS = '[CLS]',
+    String EOS = '[SEP]',
+    String unknown = '[UNK]',
+  }) {
     // normalized/lowercase texts
     List<String> normTexts = List<String>.empty(growable: true);
     // Normalize and remove unwanted chars
@@ -329,17 +335,31 @@ class Tokenizer {
       }
       normTexts.add(tempText);
     }
-    if (vocabAssetPath != null) {
-      await loadVocabFile(vocabAssetPath);
-    } else if (vocabMap == null) {
+    if (vocabMap == null) {
       throw Exception(
-          'vocabulary not set. provide vocabulary Asset file path or use `Tokenizer.loadVocabFile()` before running this function');
+          'Vocabulary not set. Use `Tokenizer.loadVocabFile()` before running this function');
+    }
+    int bosID, eosID;
+    if (vocabMap!.containsKey(BOS) && vocabMap!.containsKey(EOS)) {
+      bosID = vocabMap![BOS]!;
+      eosID = vocabMap![EOS]!;
+    } else {
+      throw Exception(
+          'BOS string : $BOS or EOS string : $EOS not found in vocabulary');
     }
 
-    return _encodeUsingVocab(normTexts);
+    List<List<int>> ids = _encodeUsingVocab(normTexts, unknown: unknown);
+    if (raw) return ids;
+    for (int i = 0; i < ids.length; i++) {
+      ids[i].add(eosID);
+      ids[i].insert(0, bosID);
+      ids[i].addAll(List.filled(totalTokens - ids[i].length, 0));
+    }
+    return ids;
   }
 
-  List<List<int>> _encodeUsingVocab(List<String> normalizedTexts) {
+  List<List<int>> _encodeUsingVocab(List<String> normalizedTexts,
+      {String unknown = '[UNK]'}) {
     List<List<int>> ids = List<List<int>>.empty(growable: true);
     // loop over normalized text
     for (int i = 0; i < normalizedTexts.length; i++) {
@@ -351,10 +371,12 @@ class Tokenizer {
       List<RegExpMatch> matches = RegExp(DELIM_REGEX_PATTERN, unicode: true)
           .allMatches(currentText)
           .toList();
+      // loop over delimiter matches
       for (int j = 0; j < matches.length; j++) {
         final start = j != 0 ? matches[j - 1].end : 0;
-        idPerSentence.addAll(
-            _recurseFindText(currentText.substring(start, matches[j].end - 1)));
+        idPerSentence.addAll(_recurseFindText(
+            currentText.substring(start, matches[j].end - 1),
+            unknown: unknown));
       }
       ids.add(idPerSentence);
     }
@@ -362,10 +384,8 @@ class Tokenizer {
   }
 
   // flagging
-  List<int> _recurseFindText(
-    String text, {
-    List<int>? list,
-  }) {
+  List<int> _recurseFindText(String text,
+      {List<int>? list, String unknown = '[UNK]'}) {
     if (text.isEmpty) return [];
     list ??= List<int>.empty(growable: true);
     if (vocabMap!.containsKey(text)) {
@@ -373,13 +393,13 @@ class Tokenizer {
       list.add(vocabMap![text]!);
       return list;
     } else {
-      if (text.length == 1) list.add(-1);
+      if (text.length == 1) list.add(vocabMap![unknown]!);
       for (int i = 1; i < text.length; i++) {
         final String subs = '##' + text.substring(i);
         //ging
         if (vocabMap!.containsKey(subs)) {
           //flag
-          list.addAll(_recurseFindText(text.substring(0, i)));
+          list.addAll(_recurseFindText(text.substring(0, i), unknown: unknown));
           // ##ging : 4726
           list.add(vocabMap![subs]!);
           break;

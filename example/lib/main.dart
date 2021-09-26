@@ -86,8 +86,8 @@ class _MyAppState extends State<MyApp> {
     final tokenizer = Tokenizer();
     await tokenizer.loadVocabFile("assets/vocab.txt");
     Stopwatch stopwatch = Stopwatch()..start();
-    final result = await tokenizer
-        .preprocessUsingVocabFile(inputTexts: ['This is a test 32434']);
+    final result =
+        await tokenizer.tokenize(inputTexts: ['This is a test 32434']);
     stopwatch.stop();
     log(stopwatch.elapsedMilliseconds.toString());
     log(result.toString());
