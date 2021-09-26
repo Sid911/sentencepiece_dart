@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="description" content="API docs for the Tokenizer constructor from the Class Tokenizer class from the sentencepiece_dart library, for the Dart programming language.">
+  <title>Tokenizer constructor - Tokenizer class - sentencepiece_dart library - Dart API</title>
+
+
+  
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  
+  <link rel="stylesheet" href="../../static-assets/github.css?v1">
+  <link rel="stylesheet" href="../../static-assets/styles.css?v1">
+  <link rel="icon" href="../../static-assets/favicon.png?v1">
+
+  
+</head>
+
+
+<body data-base-href="../../"
+      data-using-base-href="false">
+
+<div id="overlay-under-drawer"></div>
+
+<header id="title">
+  <button id="sidenav-left-toggle" type="button">&nbsp;</button>
+  <ol class="breadcrumbs gt-separated dark hidden-xs">
+    <li><a href="../../index.html">sentencepiece_dart</a></li>
+    <li><a href="../../sentencepiece_dart/sentencepiece_dart-library.html">sentencepiece_dart</a></li>
+    <li><a href="../../sentencepiece_dart/Tokenizer-class.html">Tokenizer</a></li>
+    <li class="self-crumb">Tokenizer constructor</li>
+  </ol>
+  <div class="self-name">Tokenizer</div>
+  <form class="search navbar-right" role="search">
+    <input type="text" id="search-box" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+</header>
+
+<main>
+
+
+  <div id="dartdoc-main-content" class="main-content">
+      <div>
+<h1><span class="kind-constructor">Tokenizer</span> constructor 
+    <a href="https://dart.dev/null-safety" class="feature feature-null-safety" title="Supports the null safety language feature.">Null safety</a>
+</h1></div>
+
+    <section class="multi-line-signature">
+      <span class="name ">Tokenizer</span>(<wbr><ol class="parameter-list"><li><span class="parameter" id="-param-delimiterRegExPattern">{<span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a>?</span> <span class="parameter-name">delimiterRegExPattern</span>, </span></li>
+<li><span class="parameter" id="-param-DelimiterNoSpaceRegExPattern"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a>?</span> <span class="parameter-name">DelimiterNoSpaceRegExPattern</span>}</span></li>
+</ol>)
+    </section>
+
+    
+<section class="desc markdown">
+  <p>Create a <a href="../../sentencepiece_dart/Tokenizer-class.html">Tokenizer</a> class instance</p>
+<p><strong><code>delimiterRegExPattern</code></strong> : <em>Optional</em> , Pattern used to separate <em>tokens</em>.
+If not set, takes the value of <code>DelimiterNoSpaceRegExPattern</code> and adds whitespace regex to it</p>
+<p><strong><code>DelimiterNoSpaceRegExPattern</code></strong> : <em>Optional</em>, Pattern used to separate tokens other than whitespace.
+If not set, has a default value from <a href="https://github.com/tensorflow/text/blob/v2.6.0/tensorflow_text/python/ops/bert_tokenizer.py#L39">https://github.com/tensorflow/text/blob/v2.6.0/tensorflow_text/python/ops/bert_tokenizer.py#L39</a>
+used in bert Tokenizer</p>
+</section>
+
+
+    
+<section class="summary source-code" id="source">
+  <h2><span>Implementation</span></h2>
+  <pre class="language-dart"><code class="language-dart">Tokenizer(
+    {String? delimiterRegExPattern, String? DelimiterNoSpaceRegExPattern}) {
+  DELIM_NO_WHITESPACE_PATTERN = DelimiterNoSpaceRegExPattern ??
+      r&#39;[!-&#47;]|[:-@]|[\[-`]|[{-~]|[\p{P}]|[\u{4E00}-\u{9FFF}]|[\u{3400}-\u{4DBF}]|[\u{20000}-\u{2A6DF}]|[\u{2A700}-\u{2B73F}]|[\u{2B740}-\u{2B81F}]|[\u{2B820}-\u{2CEAF}]|[\u{F900}-\u{FAFF}]|[\u{2F800}-\u{2FA1F}]&#39;;
+  DELIM_REGEX_PATTERN =
+      delimiterRegExPattern ?? r&#39;\s+|&#39; + DELIM_NO_WHITESPACE_PATTERN;
+}</code></pre>
+</section>
+
+
+  </div> <!-- /.main-content -->
+
+  <div id="dartdoc-sidebar-left" class="sidebar sidebar-offcanvas-left">
+    <header id="header-search-sidebar" class="hidden-l">
+  <form class="search-sidebar" role="search">
+    <input type="text" id="search-sidebar" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+</header>
+
+<ol class="breadcrumbs gt-separated dark hidden-l" id="sidebar-nav">
+  <li><a href="../../index.html">sentencepiece_dart</a></li>
+  <li><a href="../../sentencepiece_dart/sentencepiece_dart-library.html">sentencepiece_dart</a></li>
+  <li><a href="../../sentencepiece_dart/Tokenizer-class.html">Tokenizer</a></li>
+  <li class="self-crumb">Tokenizer constructor</li>
+</ol>
+
+
+    <h5>Tokenizer class</h5>
+    <ol>
+
+    <li class="section-title"><a href="../../sentencepiece_dart/Tokenizer-class.html#constructors">Constructors</a></li>
+    <li><a href="../../sentencepiece_dart/Tokenizer/Tokenizer.html">Tokenizer</a></li>
+
+
+    <li class="section-title">
+      <a href="../../sentencepiece_dart/Tokenizer-class.html#instance-properties">Properties</a>
+    </li>
+    <li><a href="../../sentencepiece_dart/Tokenizer/CONTROL_CHAR_REGEX_PATTERN.html">CONTROL_CHAR_REGEX_PATTERN</a></li>
+    <li><a href="../../sentencepiece_dart/Tokenizer/DELIM_NO_WHITESPACE_PATTERN.html">DELIM_NO_WHITESPACE_PATTERN</a></li>
+    <li><a href="../../sentencepiece_dart/Tokenizer/DELIM_REGEX_PATTERN.html">DELIM_REGEX_PATTERN</a></li>
+    <li class="inherited"><a href="https://api.flutter.dev/flutter/dart-core/Object/hashCode.html">hashCode</a></li>
+    <li class="inherited"><a href="https://api.flutter.dev/flutter/dart-core/Object/runtimeType.html">runtimeType</a></li>
+    <li><a href="../../sentencepiece_dart/Tokenizer/vocabMap.html">vocabMap</a></li>
+
+    <li class="section-title"><a href="../../sentencepiece_dart/Tokenizer-class.html#instance-methods">Methods</a></li>
+    <li><a href="../../sentencepiece_dart/Tokenizer/loadVocabFile.html">loadVocabFile</a></li>
+    <li class="inherited"><a href="https://api.flutter.dev/flutter/dart-core/Object/noSuchMethod.html">noSuchMethod</a></li>
+    <li><a href="../../sentencepiece_dart/Tokenizer/preprocess.html">preprocess</a></li>
+    <li><a href="../../sentencepiece_dart/Tokenizer/tokenize.html">tokenize</a></li>
+    <li class="inherited"><a href="https://api.flutter.dev/flutter/dart-core/Object/toString.html">toString</a></li>
+
+    <li class="section-title inherited"><a href="../../sentencepiece_dart/Tokenizer-class.html#operators">Operators</a></li>
+    <li class="inherited"><a href="https://api.flutter.dev/flutter/dart-core/Object/operator_equals.html">operator ==</a></li>
+
+
+
+
+</ol>
+
+  </div><!--/.sidebar-offcanvas-left-->
+
+  <div id="dartdoc-sidebar-right" class="sidebar sidebar-offcanvas-right">
+  </div><!--/.sidebar-offcanvas-->
+
+</main>
+
+<footer>
+  <span class="no-break">
+    sentencepiece_dart
+      0.0.1
+  </span>
+
+  
+</footer>
+
+
+
+<script src="../../static-assets/highlight.pack.js?v1"></script>
+<script src="../../static-assets/script.js?v1"></script>
+
+
+
+</body>
+
+</html>
+
