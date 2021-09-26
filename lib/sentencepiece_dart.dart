@@ -202,7 +202,7 @@ class Sentencepiece {
   ///
   ///   Example: `[SEP]` for ALBERT and some BERT models
   ///
-  /// **[totalTokens]** : Total Number of tokens Expected by a Bert model
+  /// **[totalTokens]** : Total Number of tokens Expected by a AlBert model
   ///
   /// -------
   ///
@@ -223,6 +223,21 @@ class Sentencepiece {
     return [ids, List.filled(totalTokens, 0), inputMasks];
   }
 
+  /// Preprocesses a **Multiple** for a bert based model.
+  /// ---
+  /// **[bos]** : **B**eginning **O**f **S**entence token
+  ///
+  ///   Example: `[CLS]` for ALBERT and some BERT models
+  ///
+  /// **[eos]** : **E**nd **O**f **S**entence token
+  ///
+  ///   Example: `[SEP]` for ALBERT and some BERT models
+  ///
+  /// **[totalTokenPerString]** : Total Number of tokens per string Expected by a AlBert model
+  ///
+  /// -------
+  ///
+  /// Returns List of len = 3 as follows `[ word_ids, segment , mask ]`
   List<List<List<int>>> preprocessMultipleForAlBert(
       List<String> inputStrings, String bos, String eos,
       {int totalTokenPerString = 128}) {
@@ -275,6 +290,7 @@ class Sentencepiece {
   }
 }
 
+/// Todo: Document
 class Tokenizer {
   // Regex Strings
   late String DELIM_NO_WHITESPACE_PATTERN;
@@ -283,21 +299,75 @@ class Tokenizer {
   String CONTROL_CHAR_REGEX_PATTERN = r'\p{Cc}|\p{Cf}';
   late Map<String, int>? vocabMap;
 
-  /// Todo : Complete documentation
+  /// Create a [Tokenizer] class instance
+  ///
+  /// **[delimiterRegExPattern]** : *Optional* , Pattern used to separate *tokens*.
+  /// If not set, takes the value of [DelimiterNoSpaceRegExPattern] and adds whitespace regex to it
+  ///
+  /// **[DelimiterNoSpaceRegExPattern]** : *Optional*, Pattern used to separate tokens other than whitespace.
+  /// If not set, has a default value from https://github.com/tensorflow/text/blob/v2.6.0/tensorflow_text/python/ops/bert_tokenizer.py#L39
+  /// used in bert Tokenizer
   Tokenizer(
-      {String? delimiterRegExPattern, String? keepDelimiterRegExPattern}) {
-    DELIM_NO_WHITESPACE_PATTERN = keepDelimiterRegExPattern ??
+      {String? delimiterRegExPattern, String? DelimiterNoSpaceRegExPattern}) {
+    DELIM_NO_WHITESPACE_PATTERN = DelimiterNoSpaceRegExPattern ??
         r'[!-/]|[:-@]|[\[-`]|[{-~]|[\p{P}]|[\u{4E00}-\u{9FFF}]|[\u{3400}-\u{4DBF}]|[\u{20000}-\u{2A6DF}]|[\u{2A700}-\u{2B73F}]|[\u{2B740}-\u{2B81F}]|[\u{2B820}-\u{2CEAF}]|[\u{F900}-\u{FAFF}]|[\u{2F800}-\u{2FA1F}]';
     DELIM_REGEX_PATTERN =
         delimiterRegExPattern ?? r'\s+|' + DELIM_NO_WHITESPACE_PATTERN;
   }
 
-  Future<void> loadVocabFile(String vocabAssetPath) async {
+  /// Loads the vocabulary file and maps them internally
+  ///
+  /// **[vocabAssetPath]** : Asset path for the vocabulary
+  Future<void> loadVocabFile(String vocabAssetPath,
+      {String separator = '\n'}) async {
     // loading vocab file
     List<String> vocab =
         (await rootBundle.loadString(vocabAssetPath)).split('\n');
     vocabMap =
         Map.fromIterables(vocab, List.generate(vocab.length, (index) => index));
+  }
+
+  List<List<List<int>>> preprocess({
+    required List<String> inputTexts,
+    String? vocabAssetPath,
+    bool lowerCase = true,
+    bool keepWhiteSpace = false,
+    bool preserveUnusedTokens = false,
+    bool normalizeUTF = false,
+    int totalTokens = 128,
+    String BOS = '[CLS]',
+    String EOS = '[SEP]',
+    String unknown = '[UNK]',
+  }) {
+    List<List<int>> idVec = tokenize(
+      inputTexts: inputTexts,
+      lowerCase: lowerCase,
+      keepWhiteSpace: keepWhiteSpace,
+      preserveUnusedTokens: preserveUnusedTokens,
+      normalizeUTF: normalizeUTF,
+      totalTokens: totalTokens,
+      BOS: BOS,
+      EOS: EOS,
+      unknown: unknown,
+    );
+
+    List<List<int>> inputMaskVec = List.empty(growable: true);
+
+    for (int i = 0; i < inputTexts.length; i++) {
+      if (idVec[i].contains(0)) {
+        final zeroIndex = idVec[i].indexOf(0);
+        inputMaskVec.add(List.filled(zeroIndex, 1) +
+            List.filled(totalTokens - zeroIndex, 0));
+      } else {
+        inputMaskVec.add(List.filled(totalTokens, 1));
+      }
+    }
+
+    return [
+      idVec,
+      List.filled(inputTexts.length, List.filled(totalTokens, 0)),
+      inputMaskVec
+    ];
   }
 
   /// tokenization for Bert Models Using vocab file.
