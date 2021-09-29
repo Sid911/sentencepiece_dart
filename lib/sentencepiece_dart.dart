@@ -392,10 +392,10 @@ class Tokenizer {
       if (lowerCase) {
         // normalize utf8 (this case 16)
         tempText = inputTexts[i]
-            .replaceAll(RegExp(r'\p{Mn}|\p{Ps}|\p{Pi}', unicode: true), '')
+            .replaceAll(RegExp(r'\p{Mn}|\p{P}', unicode: true), '')
             .toLowerCase();
         // Remove Control chars and format characters
-        tempText.replaceAll(
+        tempText = tempText.replaceAll(
             RegExp(CONTROL_CHAR_REGEX_PATTERN, unicode: true), ' ');
         if (normalizeUTF) tempText = (unorm.nfkd(tempText));
       } else {
@@ -434,6 +434,11 @@ class Tokenizer {
     // loop over normalized text
     for (int i = 0; i < normalizedTexts.length; i++) {
       String currentText = normalizedTexts[i];
+
+      if (currentText.isEmpty) {
+        ids.add([vocabMap![unknown]!]);
+        break;
+      }
       if (currentText[currentText.length - 1] != '.') {
         currentText = currentText + '.';
       }
