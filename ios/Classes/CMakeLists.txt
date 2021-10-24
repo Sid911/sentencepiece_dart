@@ -14,7 +14,7 @@
 
 file(STRINGS "VERSION.txt" SPM_VERSION)
 message(STATUS "VERSION: ${SPM_VERSION}")
-project(sentencepiece VERSION ${SPM_VERSION} LANGUAGES C CXX)
+project(sentencepiece LANGUAGES C CXX)
 
 option(SPM_ENABLE_NFKC_COMPILE "Enables NFKC compile" OFF)
 option(SPM_BUILD_ENCODER_LIB "Build SPM Enconder libraries Note (in case ON) : Will cause error if SPM_ENABLE_EXECUTBLES is ON " ON)

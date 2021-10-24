@@ -4,6 +4,8 @@
 .packages
 .pub/
 .idea/
+ios/Classes/doc
+ios/Classes/python
 
 build/
 **/.cxx

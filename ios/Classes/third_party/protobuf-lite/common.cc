@@ -141,11 +141,14 @@ inline void DefaultLogHandler(LogLevel level, const char* filename, int line,
   };
 
   // Bound the logging level.
-  // const int android_log_level = android_log_levels[level];
+  const int android_log_level = android_log_levels[level];
   ::std::ostringstream ostr;
   ostr << "[libprotobuf " << level_names[level] << " " << filename << ":"
        << line << "] " << message.c_str();
-
+  // THIS PART OF THE CODE HAS BEEN TEMP MODIFIED BECAUSE OF ERRORS CAUSED
+  // DURING COMPILE TIME IN ANDROID
+  // 
+  // 
   // Output the log string the Android log at the appropriate level.
   //__android_log_write(android_log_level, "libprotobuf-native",
   //                    ostr.str().c_str());

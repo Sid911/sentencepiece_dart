@@ -6,6 +6,10 @@ Makefile.in
 /test-driver
 /ylwrap
 /build
+/.vs
+/src/.vs
+/src/out
+/out
 
 /autom4te.cache
 /autoscan.log
@@ -35,6 +39,7 @@ CTestTestfile.cmake
 CPackSourceConfig.cmake
 DartConfiguration.tcl
 
+*.db
 *.o
 *.lo
 *.a

@@ -1,23 +1,15 @@
 # Sentenpiece Dart wrapper source
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/ae7af5f09f9e401981a92379ebc7a0ae)](https://app.codacy.com/gh/Sid911/sentencepiece?utm_source=github.com&utm_medium=referral&utm_content=Sid911/sentencepiece&utm_campaign=Badge_Grade_Settings)
+[![License](https://img.shields.io/badge/License-Apache%202.0-brightgreen.svg)](https://opensource.org/licenses/Apache-2.0)
 This is a experimental fork of original Sentencepiece project modified for use in **Sentencepiece Dart** wrapper package. For more documentation look at the package page.
 
 Modifications made :
-- Added C wrapper for the original sentencepiece_processor.h in file sentencepiece_processor_c.h.
+- Added C wrapper for the original C++ header[sentencepiece_processor.h](./src/sentencepiece_processor.h) in file [sentencepiece_processor_c.h](./src/sentencepiece_processor_c.h).
 - Changed Cmake File for option to add quick options to turn on or off builds of *static* and *shared* library.
     > This might cause error for `SPM_ENABLE_EXECUTBLES` option if enabled as this repo is not focused on it.
-- Removed a bit of logging temporily in common.cc which was causing error during android compilation.
+- Removed a bit of logging temporily in [common.cc](./third_party/protobuf-lite/common.cc#L148-L163) which was causing error during android compilation.
 
 # SentencePiece (Google) Original
-
-[![Build Status](https://travis-ci.org/google/sentencepiece.svg?branch=master)](https://travis-ci.org/google/sentencepiece)
-[![Build status](https://ci.appveyor.com/api/projects/status/vxoub3qx4fwpysyq?svg=true)](https://ci.appveyor.com/project/taku910/sentencepiece)
-[![Coverage Status](https://coveralls.io/repos/github/google/sentencepiece/badge.svg?branch=master)](https://coveralls.io/github/google/sentencepiece?branch=master)
-[![GitHub Issues](https://img.shields.io/github/issues/google/sentencepiece.svg)](https://github.com/google/sentencepiece/issues)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/5851945fc54947fc9e964f78c3b6bdfa)](https://app.codacy.com/app/taku910/sentencepiece?utm_source=github.com&utm_medium=referral&utm_content=google/sentencepiece&utm_campaign=Badge_Grade_Dashboard)
-[![PyPI version](https://badge.fury.io/py/sentencepiece.svg)](https://badge.fury.io/py/sentencepiece)
-[![PyPi downloads](https://img.shields.io/pypi/dm/sentencepiece?style=flat-square&logo=pypi&logoColor=white)](https://pypi.org/project/sentencepiece/)
-[![Contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg)](CONTRIBUTING.md)
-[![License](https://img.shields.io/badge/License-Apache%202.0-brightgreen.svg)](https://opensource.org/licenses/Apache-2.0)
 
 SentencePiece is an unsupervised text tokenizer and detokenizer mainly for
 Neural Network-based text generation systems where the vocabulary size
